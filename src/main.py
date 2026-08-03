@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import traceback
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from src.collector import collect
@@ -14,8 +14,8 @@ _KST = ZoneInfo("Asia/Seoul")
 
 
 def format_message(summary: str) -> str:
-    today = datetime.now(tz=_KST).strftime("%Y-%m-%d")
-    return f"📰 {today} 오늘의 주요 뉴스\n\n{summary}"
+    yesterday = (datetime.now(tz=_KST) - timedelta(days=1)).strftime("%Y-%m-%d")
+    return f"📰 {yesterday} 주요 뉴스\n\n{summary}"
 
 
 def run() -> None:
