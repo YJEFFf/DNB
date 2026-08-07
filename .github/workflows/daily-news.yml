@@ -2,8 +2,8 @@ name: Daily News Summary
 
 on:
   schedule:
-    # UTC 22:00 = KST 07:00 (익일). GitHub Actions 무료 러너 특성상 수 분~수십 분 지연 가능해 8시보다 여유있게 7시로 설정.
-    - cron: "0 22 * * *"
+    # UTC 21:00 = KST 06:00 (익일). GitHub Actions의 scheduled cron은 트리거 자체가 몇 시간까지 지연될 수 있어(수 분~수십 분이 보통이나 드물게 3시간 이상), 목표 도착 시각(KST 07시)보다 1시간 앞당겨 여유를 둠.
+    - cron: "0 21 * * *"
   workflow_dispatch: {}
 
 jobs:
