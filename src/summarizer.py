@@ -61,9 +61,13 @@ def summarize(articles: list[dict]) -> str:
 
     response = _client.messages.create(
         model=CLAUDE_MODEL,
-        max_tokens=8192,
+        max_tokens=16000,
+        thinking={"type": "disabled"},
         messages=[{"role": "user", "content": prompt}],
     )
+
+    if response.stop_reason == "max_tokens":
+        print("경고: 요약 응답이 max_tokens 한도에서 잘렸습니다 (기사 수를 줄이거나 max_tokens를 늘리세요).")
 
     for block in response.content:
         if block.type == "text":
