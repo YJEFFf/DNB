@@ -18,7 +18,11 @@ NAVER_SECTIONS = {
 ALLOWED_OUTLETS = {"조선일보", "중앙일보", "동아일보", "한겨레", "경향신문"}
 
 LOOKBACK_HOURS = 24
-MAX_PAGES_PER_DATE = 250  # 크롤링 안전장치(무한 페이지네이션 방지)
+MAX_PAGES_PER_DATE = 800  # 크롤링 안전장치(무한 페이지네이션 방지)
+# 실측(2026-08): 전일 파티션 페이지 수 = 사회 ~600, 경제 ~400, 정치 ~300, 세계 ~250, IT ~150.
+# 06시 실행 시 전일 파티션은 24시간 경계까지 ~18시간(=사회 기준 ~450쪽)을 훑으므로 상한이
+# 이보다 낮으면 사회 섹션이 조용히 잘린다. 정상 종료는 페이지 반복 감지와 24시간 컷오프가
+# 담당하고, 이 값은 순수한 폭주 방지용 백스톱이다.
 CLAUDE_MODEL = "claude-sonnet-5"
 REQUEST_TIMEOUT = 10
 TELEGRAM_MAX_MESSAGE_LENGTH = 4096

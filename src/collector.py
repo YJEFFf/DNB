@@ -106,7 +106,10 @@ def _collect_section(session: requests.Session, sid1: str, now: datetime) -> lis
                 published = _parse_relative_time(now, time_text)
                 if published is None:
                     continue  # 이례적 시간 포맷 -> 안전하게 건너뜀
-                if published < cutoff:
+                # 네이버는 24~48시간 전 기사를 모두 "1일전" 하나로 표기하므로
+                # now-24h로 환산된 경계값(= cutoff)은 창 밖으로 간주해 제외한다.
+                # 24시간 이내 기사가 "1일전"으로 표기되는 경우는 없다(23시간전 -> 1일전).
+                if published <= cutoff:
                     reached_cutoff = True
                     continue
                 if link in seen_links or outlet not in ALLOWED_OUTLETS or _is_wire_caption(title, outlet):
