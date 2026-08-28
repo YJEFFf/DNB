@@ -2,9 +2,15 @@ name: Daily News Summary
 
 on:
   schedule:
-    # UTC 21:00 = KST 06:00 (익일). GitHub Actions의 scheduled cron은 트리거 자체가 몇 시간까지 지연될 수 있어(수 분~수십 분이 보통이나 드물게 3시간 이상), 목표 도착 시각(KST 07시)보다 1시간 앞당겨 여유를 둠.
+    # UTC 21:00 = KST 06:00 (익일). GitHub Actions의 scheduled cron은 트리거 자체가 몇 시간까지 지연될 수 있어(수 분~수십 분이 보통이나 드물게 8시간 이상), 목표 도착 시각(KST 07시)보다 1시간 앞당겨 여유를 둠.
+    # 수집 범위는 실행 시각이 아니라 대상 날짜(전날 KST 00~24시)로 고정되므로, 지연되면 알림이 늦게 올 뿐 내용은 밀리지 않는다.
     - cron: "0 21 * * *"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      target_date:
+        description: "요약할 날짜 (YYYY-MM-DD, 비우면 전날)"
+        required: false
+        default: ""
 
 jobs:
   news:
@@ -25,3 +31,4 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TARGET_DATE: ${{ inputs.target_date }}

@@ -2,26 +2,30 @@
 
 from __future__ import annotations
 
+import os
 import traceback
-from datetime import datetime, timedelta
-from zoneinfo import ZoneInfo
+from datetime import date
 
-from src.collector import collect
+from src.collector import collect, yesterday
 from src.notifier import send_message
 from src.summarizer import summarize
 
-_KST = ZoneInfo("Asia/Seoul")
+
+def resolve_target_date() -> date:
+    """요약 대상 날짜(KST 기준 전날). TARGET_DATE로 특정 날짜를 다시 돌릴 수 있다."""
+    override = os.environ.get("TARGET_DATE", "").strip()
+    return date.fromisoformat(override) if override else yesterday()
 
 
-def format_message(summary: str) -> str:
-    yesterday = (datetime.now(tz=_KST) - timedelta(days=1)).strftime("%Y-%m-%d")
-    return f"📰 {yesterday} 주요 뉴스\n\n{summary}"
+def format_message(summary: str, target_date: date) -> str:
+    return f"📰 {target_date:%Y-%m-%d} 주요 뉴스\n\n{summary}"
 
 
 def run() -> None:
-    collected = collect()
-    summary = summarize(collected)
-    message = format_message(summary)
+    target_date = resolve_target_date()
+    collected = collect(target_date)
+    summary = summarize(collected, target_date)
+    message = format_message(summary, target_date)
     send_message(message)
 
 
