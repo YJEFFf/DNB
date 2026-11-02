@@ -1,12 +1,39 @@
-# 매일 아침 뉴스 요약 알림
+# DNB · 매일 아침 뉴스 브리핑
 
-매일 아침 6시(KST), 네이버 뉴스에서 5대 종합일간지(조선일보/중앙일보/동아일보/한겨레/경향신문)의 **전날 하루치**(KST 00~24시) 기사를 카테고리 구분 없이 수집하고, Claude가 그날의 주요 뉴스를 직접 선정·요약해 텔레그램으로 보내주는 자동화 프로젝트입니다.
+네이버 뉴스에서 5개 종합일간지(조선일보·중앙일보·동아일보·한겨레·경향신문)의 **전날 하루치 기사 목록**을 수집하고, Claude가 주요 뉴스를 선정·요약해 텔레그램으로 보내는 자동화 프로젝트입니다.
+
+**Python · Claude API · Beautiful Soup · GitHub Actions · Telegram Bot API**
+
+## 주요 구현
+
+| 관심사 | 구현 |
+| --- | --- |
+| 수집 범위 | KST 대상 날짜의 뉴스 목록을 수집하고 기사 링크 기준으로 중복 제거 |
+| 수집 장애 | 페이지 요청 재시도, 반복 페이지 감지, 최대 페이지 수 제한 |
+| LLM 처리 | 제목·언론사·시각으로 주요 사안을 선정·요약하고 출처번호를 실제 링크로 변환 |
+| 알림 | 긴 메시지를 줄 단위로 분할하고 파이프라인 오류 알림 전송 시도 |
+| 자동화 | 매일 KST 06:00 예약 실행, 특정 날짜를 지정한 수동 실행 |
+
+LLM에 전달하는 입력은 **기사 제목·언론사·시각**입니다. 기사 본문을 읽거나 사실관계를 검증하지 않으므로 제목 기반 브리핑으로 사용하고, 세부 내용은 연결된 원문에서 확인합니다.
 
 ## 동작 방식
 
+```mermaid
+flowchart LR
+    A[대상 날짜 결정] --> B[뉴스 목록 수집·중복 제거]
+    B --> C[Claude 주요 뉴스 선정·요약]
+    C --> D[출처 링크 연결]
+    D --> E[텔레그램 분할 전송]
 ```
-네이버 뉴스 섹션 크롤링(전날 하루치 전체) → Claude가 주요 뉴스 선정+요약 → 텔레그램 전송
-```
+
+| 파일 | 역할 |
+| --- | --- |
+| [src/main.py](src/main.py) | 대상 날짜 결정, 수집·요약·알림 연결 |
+| [src/collector.py](src/collector.py) | 날짜별 수집, 재시도, 중복 제거 |
+| [src/summarizer.py](src/summarizer.py) | LLM 프롬프트와 출처 링크 연결 |
+| [src/notifier.py](src/notifier.py) | 알림 분할·전송 |
+| [src/config.py](src/config.py) | 수집 대상·모델·시간 제한 설정 |
+| [daily-news.yml](.github/workflows/daily-news.yml) | 예약 실행과 날짜 지정 수동 실행 |
 
 기사 수집은 네이버 뉴스 웹페이지(news.naver.com)를 크롤링하는 방식이라 공식 API가 아닙니다. 네이버가 페이지 구조를 바꾸면 크롤러가 깨질 수 있습니다.
 
@@ -45,10 +72,19 @@ GitHub Actions가 매일 UTC 21:00(= KST 06:00)에 자동 실행합니다. GitHu
 | `TELEGRAM_BOT_TOKEN` | 텔레그램 봇 토큰 |
 | `TELEGRAM_CHAT_ID` | 텔레그램 chat_id |
 
-## 로컬에서 테스트하기
+## 로컬에서 실행하기
+
+워크플로우 기준 Python 3.11을 사용합니다. 저장소 루트에서 실행합니다.
 
 ```bash
-pip install -r requirements.txt
+git clone https://github.com/YJEFFf/DNB.git
+cd DNB
+python3 -m venv .venv
+source .venv/bin/activate
+# Windows PowerShell: .venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+
+cp .env.example .env
 # .env 파일을 열어 실제 키 값 입력
 
 # 1) 크롤링만 확인 (API 키 없이도 실행 가능). 인자로 날짜를 주면 그날을 수집
@@ -61,6 +97,9 @@ python -m src.main
 # 3) 특정 날짜로 다시 실행 (놓친 날 재발송)
 TARGET_DATE=2026-08-27 python -m src.main
 ```
+
+공유용 설정은 [.env.example](.env.example)에 있습니다. 실제 키를 넣는 `.env`는 Git에서 제외됩니다.
+위 명령은 수동 실행 안내이며 자동 테스트 통과 기록을 뜻하지 않습니다.
 
 ## GitHub Actions에서 수동 실행하기
 
